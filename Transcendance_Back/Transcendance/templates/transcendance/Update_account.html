@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update de compte</title>
+</head>
+
+<body>
+    <h1>Modifiez vos informations !</h1>
+    <p>Ici, vous pouvez modifier vos informations 🔥...</p>
+    <form method="post" id="updateForm" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" id="submitButton">Modifier ♻️</button>
+    </form>
+    {% if error %}
+    <ul>{{error}}</ul>
+    {% endif %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          var inputs = document.getElementsByTagName('input');
+          for (var i = 0; i < inputs.length; i++) {
+            inputs[i].addEventListener('focus', function() {
+              this.value = '';
+            });
+          }
+
+          // Get the form and the submit button
+          var form = document.getElementById('updateForm');
+          var submitButton = document.getElementById('submitButton');
+
+          // Initially disable the submit button
+          submitButton.disabled = true;
+
+          // Add an event listener to the form for the input event
+          form.addEventListener('input', function() {
+            // If an input event is fired, enable the submit button
+            submitButton.disabled = false;
+          });
+        });
+    </script>
+</body>
+</html>
