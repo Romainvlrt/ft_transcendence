@@ -53,7 +53,6 @@ services:
       - .env
     environment:
       - DJANGO_SETTINGS_MODULE=Transcendance_Back.settings
-      - DB_HOST=postgres 
     depends_on:
       - postgres 
     networks:
