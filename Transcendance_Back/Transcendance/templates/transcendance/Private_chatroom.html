@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Prive</title>
+
+    {% if user.is_authenticated %}
+        <script>
+            function get_room_name() 
+            {
+                var room_name = window.location.pathname.split('/')[2];
+                var users = room_name.split('_');
+                users.sort();
+                room_name = users.join('_');
+                return room_name;   
+            }
+
+            // Connexion WebSocket avec le serveur
+            var room_name = get_room_name();
+
+            socket = new WebSocket('wss://localhost/ws/private_chat/' + room_name + '/');
+
+            socket.onopen = function(e) {
+                console.log('Connexion a la room ' + room_name + ' reussie');
+            };
+
+            socket.onclose = function(e) {
+                console.error('Connexion a la room ' + room_name + ' echouee');
+            };
+        </script>
+    {% endif %}
+</head>
+
+
+<body>
+    <h1>Chat Prive</h1>
+    <div id="chat-messages">
+        {% if message %}
+            {% for msg in message %}
+                <div id="display_database_messages-{{forloop.counter}}">
+                    <p class="user_timestamp_button">
+                        <span class="msg_user">
+                            {{ msg.user }} | {{ msg.timestamp }}</span>
+                        </span>
+                    </p>
+                    <p>{{msg.content}}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div id="no-messages">Aucun message pour le moment</div>
+        {% endif %}
+    </div>
+
+    <form id="chat-form" method="post">
+        {% csrf_token %}
+        <input type="text" id="message-input" placeholder="Entrez votre message... 🔱" autocomplete="off">
+        <button type="submit">Envoyer ✅</button>
+    </form>
+
+    <script>
+        // Fonction pour afficher les messages reçus
+        function displayMessage(messageData)
+        {
+            var messageElement = document.createElement('div');
+            var userTimestampElement = document.createElement('p');
+            var messageContentElement = document.createElement('p');
+            var container = document.createElement('div');
+
+            messageElement.className = messageData.username.trim();
+            container.style.display = 'flex';
+            
+
+            userTimestampElement.textContent = messageData.username.trim() + ' | ' + messageData.timestamp.trim();
+            messageContentElement.textContent = messageData.message.trim();
+
+            container.appendChild(userTimestampElement);
+
+            messageElement.appendChild(container);
+            messageElement.appendChild(messageContentElement);
+
+            document.querySelector('#chat-messages').appendChild(messageElement);
+        }
+
+        // Écoute de l'événement de soumission du formulaire
+        document.querySelector('#chat-form').addEventListener('submit', function(event) {
+                // Empêche le comportement par défaut du formulaire (rechargement de la page)
+                event.preventDefault();
+
+                // Récupère le contenu du champ de texte
+                var messageInput = document.querySelector('#message-input');
+                var messageContent = messageInput.value;
+
+                // Envoie le message au serveur via WebSocket
+                socket.send(JSON.stringify({
+                    'type': 'send_message',
+                    'message': messageContent
+                }));
+
+                // Efface le champ de texte après l'envoi du message
+                messageInput.value = '';
+            });
+            
+
+            // Écoute des messages reçus via WebSocket
+            socket.onmessage = function(event) {
+                var messageData = JSON.parse(event.data);
+
+                var noMessagesDiv = document.getElementById('no-messages');
+                if (noMessagesDiv) {
+                    noMessagesDiv.remove();
+                }
+                displayMessage(messageData);
+            };
+    </script>
+</body>
+</html>
